@@ -1,0 +1,34 @@
+This is a ELF-loader for use with Ndless. It (eventually) will let you run ELF executables on Ndless. 
+
+The loader works but is held together by chewing gum at this stage.
+
+At the moment, the way Ndless links and loads executables is:
+
+1. Link the files together and add extra symbols so the global offset table can be found.
+2. Slap on a startup file with position independent code that modifies the GOT on the fly then jumps to entry point.
+3. Dump the compiled ELF file into a memory image. This is the executable.
+4. The program loader on Ndless simply copies the binary into memory at runtime and executes it without doing any preparation since the PIC at the start of the program will handle all the GOT relocation.
+
+So, why write a ELF loader if this works fine?
+
+First, because I'm bored.
+
+Second, while the method of fixing the GOT just in time for execution works, it doesn't update the function pointers in statically allocated variables. This is probably because during link time, the function addresses in static variables are hard coded into the .data section. As soon as it relocates however, the hardcoded function addresses become invalid. The relocation code doesn't (and can't because once it's dumped to a memory image, all the symbol definitions are gone) take in account of this. Of course, when you run code like
+
+void foo() {}
+
+int main() {
+	static void (*var)() = foo;
+	var();
+	return 0;
+}
+
+it crashes because the value of 'var' is hardcoded but at runtime, the function pointer isn't being updated to the correct address.
+
+Although you can easily work around this in C, C++ is a different kettle of fish. Most of my C++ code with virtual functions compiled for Ndless also crash possibly because of the same problem except with vtables (i.e. function pointers in vtables not being changed to correct one during relocation at runtime).
+
+So basically, the point of the project is to create a program that loads the executable as a ELF, keeping all of the symbol definitions so static variables in the .data section can be updated at runtime.
+
+Compiling ELFs to run on this loader is simple. No need to run 'nspire-gcc' or 'nspire-ld'. You can just run arm-none-eabi-gcc directly and link it as per normal. The resulting ELF file should be directly loadable.
+
+Licenced under GPLv3
