@@ -76,3 +76,42 @@ typedef struct {
   Elf32_Word   p_align;
 
 } Elf32_Phdr;
+
+typedef struct {
+    Elf32_Word st_name;
+    Elf32_Addr st_value; 
+    Elf32_Word st_size; 
+    unsigned char st_info; 
+    unsigned char st_other; 
+    Elf32_Half st_shndx;
+} Elf32_Sym;
+
+typedef struct {
+    Elf32_Addr r_offset;
+    Elf32_Word r_info; 
+} Elf32_Rel;
+
+typedef struct {
+    Elf32_Addr r_offset;
+    Elf32_Word r_info;
+    Elf32_SWord r_addend; 
+} Elf32_Rela;
+
+#define ELF32_R_SYM(i) ((i)>>8)
+#define ELF32_R_TYPE(i) ((unsigned char)(i))
+#define ELF32_R_INFO(s,t) (((s)<<8)+(unsigned char)(t))
+
+void elf_set_file(FILE* fp);
+Elf32_Ehdr elf_get_header();
+char* elf_resolve_string(int index);
+void elf_begin_read_section();
+int elf_read_section(int index, Elf32_Shdr* write);
+Elf32_Shdr* elf_read_next_section();
+int elf_get_symtab_section(Elf32_Shdr* write);
+void elf_load_section_to_addr(Elf32_Shdr *shdr, void* ptr, size_t max);
+char* elf_resolve_symbol_string(int index, int section_index);
+void elf_get_symbol(int index, Elf32_Sym *symbol);
+
+void elf_fix_reloc(
+    void (*callback)(unsigned char type, int a, Elf32_Addr offset, Elf32_Addr origval) 
+);

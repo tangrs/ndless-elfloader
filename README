@@ -2,6 +2,8 @@ This is a ELF-loader for use with Ndless. It (eventually) will let you run ELF e
 
 The loader works but is held together by chewing gum at this stage. Devs only, not for public consumption.
 
+Still a few bugs to sort out but by now, it can load linked files that are linked with the --emit-relocs option on.
+
 At the moment, the way Ndless links and loads executables is:
 
 1. Link the files together and add extra symbols so the global offset table can be found.

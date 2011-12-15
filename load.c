@@ -19,74 +19,36 @@
 #include "elf.h"
 #include <os.h>
 
+#define RESOLVE_ADDR(x) (void*)( ((uint32_t)(x)) - ((uint32_t)base_addr) + ((uint32_t)baseptr) )
 
-Elf32_Ehdr elf_get_header(FILE* fp) {
-    Elf32_Ehdr ehdr;
-    
-    rewind(fp);
-    fread(&ehdr, sizeof(Elf32_Ehdr), 1, fp);
-    
-    return ehdr;
-}
+static void *baseptr;
+static Elf32_Addr *base_addr;
 
-static int sh_index = 0;
-static Elf32_Ehdr* sh_ehdr;
-static FILE* sh_fp;
-
-void elf_begin_read_section(FILE* fp, Elf32_Ehdr* ehdr) {
-    sh_index = 0;
-    sh_fp = fp;
-    sh_ehdr = ehdr;
-}
-
-int elf_read_section(int index, Elf32_Ehdr* ehdr, Elf32_Shdr* write) {
-    if (!(index < ehdr->e_shnum)) return -1;
+void callback(unsigned char type, int a, Elf32_Addr offset, Elf32_Addr origval)  {
+    if (type != 2) return;
     
-    fseek(sh_fp, ehdr->e_shoff+(index*ehdr->e_shentsize), SEEK_SET);
-    fread(write, 1, ehdr->e_shentsize, sh_fp);
+    printf(" Patched Offset: %x Original Value: %x New value: %x\n", offset, origval, RESOLVE_ADDR(origval));
     
-    return 0;
-}
-
-Elf32_Shdr* elf_read_next_section() {
-    static Elf32_Shdr shdr;
-    int ret = elf_read_section(sh_index, sh_ehdr, &shdr);
-    if (ret == 0) sh_index++;
+    *((uint32_t*)RESOLVE_ADDR(offset)) = RESOLVE_ADDR(origval);
     
-    return (ret == 0 ? &shdr : NULL);
-}
-
-char* elf_resolve_string(FILE* fp, int index, Elf32_Ehdr* ehdr) {
-    static char string[128];
-    if (!ehdr->e_shstrndx) return NULL;
-    
-    Elf32_Shdr string_section;
-    int ret = elf_read_section(ehdr->e_shstrndx, ehdr, &string_section);
-    if (ret != 0) return NULL;
-    
-    fseek(fp, string_section.sh_offset+index, SEEK_SET);
-    fread(string, 1, sizeof(string)-1, fp);
-    
-    string[sizeof(string)-1] = 0;
-    
-    return string;
 }
 
 int main() {
     FILE* fp = fopen("test/parseelf.elf.tns","rb");
     Elf32_Shdr* shdr;
-    void * baseptr = NULL;
+    baseptr = NULL;
     void * sectionptr = NULL;
     size_t imagesize = 0;
     if (!fp) return 0;
     
-    Elf32_Ehdr hdr = elf_get_header(fp);
+    elf_set_file(fp);
+    Elf32_Ehdr hdr = elf_get_header();
     
-    elf_begin_read_section(fp, &hdr);
+    elf_begin_read_section();
     
     unsigned int prev_addr = 0;
     unsigned int prev_size = 0;
-    unsigned int base_addr = 0xffffffff;
+    base_addr = 0xffffffff;
     
     while(shdr = elf_read_next_section()) {
         if (shdr->sh_flags & 0x2) {
@@ -127,7 +89,7 @@ int main() {
             }
             printf("Copied section %s total size is %dbytes addr is %x\n"
                     "Total image size is now %dbytes\n",
-            elf_resolve_string(fp, shdr->sh_name, &hdr),
+            elf_resolve_string(shdr->sh_name),
             shdr->sh_size,shdr->sh_addr, imagesize);
         }
         
@@ -135,15 +97,13 @@ int main() {
     printf("The base address was determined to be 0x%x\n",base_addr);
     printf("The loaded base address was 0x%p\n",baseptr);
     
-    #define RESOLVE_ADDR(x) (void*)(((uint32_t)x)-base_addr+((uint32_t)baseptr))
-    
     //Now the process is loaded into RAM
     //We're going to look for a .got section to fill in
     
-    elf_begin_read_section(fp, &hdr);
+    elf_begin_read_section();
     while(shdr = elf_read_next_section()) {
         if (shdr->sh_flags & 0x2) {
-            if (strcmp(elf_resolve_string(fp, shdr->sh_name, &hdr),".got") == 0) {
+            if (strcmp(elf_resolve_string(shdr->sh_name),".got") == 0) {
                 //Relocate
                 
                 Elf32_Addr *addr = RESOLVE_ADDR(shdr->sh_addr);
@@ -163,6 +123,8 @@ int main() {
             }
         }
     }
+    
+    elf_fix_reloc(callback);
     
     fclose(fp);
     

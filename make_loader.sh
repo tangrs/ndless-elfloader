@@ -1,5 +1,13 @@
 #!/bin/sh
 
-nspire-gcc -c load.c -I/Users/danieltang/ndless/trunk/include
-nspire-ld load.o -o load.elf
+GCC='nspire-gcc'
+CFLAGS='-Wno-attributes'
+
+$GCC $CFLAGS -c load.c
+$GCC $CFLAGS -c elf_header.c
+$GCC $CFLAGS -c elf_section.c
+$GCC $CFLAGS -c elf_string.c
+$GCC $CFLAGS -c elf_reloc.c
+
+nspire-ld load.o elf_header.o elf_reloc.o elf_section.o elf_string.o -o load.elf
 arm-none-eabi-objcopy -O binary load.elf load.tns
