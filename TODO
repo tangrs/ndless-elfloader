@@ -1,0 +1,5 @@
+TODO
+
+* Fix relocations when base is 0x0 (something weird goes on)
+* Linking with C++ (for some reason, we get _syscall_savedlr undefined errors)
+* Polish code up

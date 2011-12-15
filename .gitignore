@@ -2,3 +2,4 @@
 *.tns
 *.bin
 *.o
+.DS_Store
