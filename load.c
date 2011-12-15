@@ -126,13 +126,14 @@ int main() {
                     break;
             }
             printf("Copied section %s total size is %dbytes addr is %x\n"
-                    " Total image size is now %dbytes\n",
+                    "Total image size is now %dbytes\n",
             elf_resolve_string(fp, shdr->sh_name, &hdr),
             shdr->sh_size,shdr->sh_addr, imagesize);
         }
         
     }
     printf("The base address was determined to be 0x%x\n",base_addr);
+    printf("The loaded base address was 0x%p\n",baseptr);
     
     #define RESOLVE_ADDR(x) (void*)(((uint32_t)x)-base_addr+((uint32_t)baseptr))
     
@@ -148,10 +149,16 @@ int main() {
                 Elf32_Addr *addr = RESOLVE_ADDR(shdr->sh_addr);
                 int entries = shdr->sh_size/sizeof(Elf32_Addr), i;
                 for (i=0; i<entries; i++) {
-                    addr[i] = RESOLVE_ADDR(addr[i]);
+                    printf("Patched GOT entry from %x",addr[i]);
+                    if (addr[i] >= base_addr) {
+                        addr[i] = RESOLVE_ADDR(addr[i]);
+                        printf(" to %x\n", RESOLVE_ADDR(addr[i]) );
+                    }else{
+                        addr[i] = baseptr;
+                        printf(" to %x\n", baseptr);
+                    }
                 }
-                                    printf("Patched GOT\n");
-                    idle();
+
                 break;
             }
         }
@@ -164,14 +171,10 @@ int main() {
     clear_cache();
     idle();
     
-    /*char buffer[100];
-    sprintf(buffer, "%p", baseptr);
-    show_msgbox("Debug", buffer);*/
-    
     printf("Total size of image was %d. Now jumping to entry point\n\n", imagesize);
     
     ((int (*)(int, char*[]))(RESOLVE_ADDR(hdr.e_entry)))(1, argv);
-    printf("Image (probably) ran successfully!\n");
+    printf("\nImage (probably) ran successfully!\n");
     printf("Total size is %dbytes\n", imagesize);
     free(baseptr);
     

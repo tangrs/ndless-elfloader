@@ -1,6 +1,6 @@
 This is a ELF-loader for use with Ndless. It (eventually) will let you run ELF executables on Ndless. 
 
-The loader works but is held together by chewing gum at this stage.
+The loader works but is held together by chewing gum at this stage. Devs only, not for public consumption.
 
 At the moment, the way Ndless links and loads executables is:
 
@@ -28,6 +28,8 @@ it crashes because the value of 'var' is hardcoded but at runtime, the function 
 Although you can easily work around this in C, C++ is a different kettle of fish. Most of my C++ code with virtual functions compiled for Ndless also crash possibly because of the same problem except with vtables (i.e. function pointers in vtables not being changed to correct one during relocation at runtime).
 
 So basically, the point of the project is to create a program that loads the executable as a ELF, keeping all of the symbol definitions so static variables in the .data section can be updated at runtime.
+
+For an example of this happening, compile the test program and run it. Notice the address differences.
 
 Compiling ELFs to run on this loader is simple. No need to run 'nspire-gcc' or 'nspire-ld'. You can just run arm-none-eabi-gcc directly and link it as per normal. The resulting ELF file should be directly loadable.
 
