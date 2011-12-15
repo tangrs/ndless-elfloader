@@ -25,12 +25,11 @@ static void *baseptr;
 static Elf32_Addr *base_addr;
 
 void callback(unsigned char type, int a, Elf32_Addr offset, Elf32_Addr origval)  {
-    if (type != 2) return;
-    
-    printf(" Patched Offset: %x Original Value: %x New value: %x\n", offset, origval, RESOLVE_ADDR(origval));
-    
-    *((uint32_t*)RESOLVE_ADDR(offset)) = RESOLVE_ADDR(origval);
-    
+    if (type == 2) {
+        printf("Patched offset: %x from %x", offset, *((uint32_t*)RESOLVE_ADDR(offset)));
+        *((uint32_t*)RESOLVE_ADDR(offset)) = RESOLVE_ADDR(*((uint32_t*)RESOLVE_ADDR(offset)));
+        printf(" to %x\n", *((uint32_t*)RESOLVE_ADDR(offset)));
+    }
 }
 
 int main() {
@@ -44,11 +43,15 @@ int main() {
     elf_set_file(fp);
     Elf32_Ehdr hdr = elf_get_header();
     
+    printf("---Begin loading ELF file---\n");
+    
     elf_begin_read_section();
     
     unsigned int prev_addr = 0;
     unsigned int prev_size = 0;
     base_addr = 0xffffffff;
+    
+    printf("Loading sections to memory\n");
     
     while(shdr = elf_read_next_section()) {
         if (shdr->sh_flags & 0x2) {
@@ -74,9 +77,7 @@ int main() {
                     rewind(fp);
                     fseek(fp, shdr->sh_offset,SEEK_SET);
                     memset(sectionptr, 0xbb, shdr->sh_size);
-                    int bytes= fread(sectionptr, 1, shdr->sh_size, fp);
-                    
-                    printf("Read %dbytes from file to memory\n",bytes);
+                    fread(sectionptr, 1, shdr->sh_size, fp);
                     idle();
                     break;
                 case 8:
@@ -87,15 +88,17 @@ int main() {
                 default:
                     break;
             }
-            printf("Copied section %s total size is %dbytes addr is %x\n"
-                    "Total image size is now %dbytes\n",
-            elf_resolve_string(shdr->sh_name),
-            shdr->sh_size,shdr->sh_addr, imagesize);
+            printf("Copied section %s\n",
+            elf_resolve_string(shdr->sh_name));
         }
         
     }
+    printf("Finished loading image\n");
+    
     printf("The base address was determined to be 0x%x\n",base_addr);
-    printf("The loaded base address was 0x%p\n",baseptr);
+    printf("The image was loaded to 0x%p\n",baseptr);
+    
+    printf("---Begin relocating---\n");
     
     //Now the process is loaded into RAM
     //We're going to look for a .got section to fill in
@@ -112,10 +115,10 @@ int main() {
                     printf("Patched GOT entry from %x",addr[i]);
                     if (addr[i] >= base_addr) {
                         addr[i] = RESOLVE_ADDR(addr[i]);
-                        printf(" to %x\n", RESOLVE_ADDR(addr[i]) );
+                        printf(" to %p\n", RESOLVE_ADDR(addr[i]) );
                     }else{
                         addr[i] = baseptr;
-                        printf(" to %x\n", baseptr);
+                        printf(" to %p\n", baseptr);
                     }
                 }
 
@@ -126,6 +129,8 @@ int main() {
     
     elf_fix_reloc(callback);
     
+    printf("Finished relocating\n");
+    
     fclose(fp);
     
     char *argv[] = { "test/parseelf.elf.tns", 0 };
@@ -133,11 +138,12 @@ int main() {
     clear_cache();
     idle();
     
-    printf("Total size of image was %d. Now jumping to entry point\n\n", imagesize);
+    printf("Total size of image was %d.\n"
+           "Now jumping to entry point. It's bye bye from now\n\n", imagesize);
     
     ((int (*)(int, char*[]))(RESOLVE_ADDR(hdr.e_entry)))(1, argv);
-    printf("\nImage (probably) ran successfully!\n");
-    printf("Total size is %dbytes\n", imagesize);
+    printf("\nImage (probably) ran successfully!\n"
+           "Freeing memory and exiting ELF loader\n");
     free(baseptr);
     
     return 0;

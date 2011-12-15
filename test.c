@@ -7,7 +7,7 @@ void _start() {
 }
 
 void foo() {
-    printf("FOO! I didn't crash!\n");
+    printf("FOO! I didn't crash! ^_^\n");
 }
 
 char *globvar = "Hello from global!\n";
@@ -22,6 +22,7 @@ int main() {
 	var();
 	
 	printf("Printing contents of globvar: %s\n",globvar);
+	
 	printf("If the above reads \"Hello from global!\", this thing worked\n");
 	printf("Goodbye world! \n");
 	
