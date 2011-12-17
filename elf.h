@@ -115,3 +115,5 @@ void elf_get_symbol(int index, Elf32_Sym *symbol);
 void elf_fix_reloc(
     void (*callback)(unsigned char type, int a, Elf32_Addr offset, Elf32_Addr origval) 
 );
+
+Elf32_Addr elf_get_main();

@@ -47,15 +47,15 @@ int main() {
     
     elf_begin_read_section();
     
-    unsigned int prev_addr = 0;
+    unsigned int prev_addr = 0xffffffff;
     unsigned int prev_size = 0;
     base_addr = 0xffffffff;
     
     printf("Loading sections to memory\n");
-    
+
     while(shdr = elf_read_next_section()) {
         if (shdr->sh_flags & 0x2) {
-            if (prev_addr == 0) prev_addr = shdr->sh_addr;
+            if (prev_addr == 0xffffffff) prev_addr = shdr->sh_addr;
             if (shdr->sh_addr < base_addr) base_addr = shdr->sh_addr;
             
             size_t padding = (shdr->sh_addr-prev_addr)-prev_size;
@@ -71,13 +71,14 @@ int main() {
             prev_size = shdr->sh_size;
             prev_addr = shdr->sh_addr;
             imagesize = newsize;
-            
+
             switch (shdr->sh_type) {
                 case 1:
                     rewind(fp);
                     fseek(fp, shdr->sh_offset,SEEK_SET);
                     memset(sectionptr, 0xbb, shdr->sh_size);
                     fread(sectionptr, 1, shdr->sh_size, fp);
+                    
                     idle();
                     break;
                 case 8:
@@ -131,20 +132,20 @@ int main() {
     
     printf("Finished relocating\n");
     
-    fclose(fp);
-    
     char *argv[] = { "test/parseelf.elf.tns", 0 };
     
     clear_cache();
     idle();
     
-    printf("Total size of image was %d.\n"
-           "Now jumping to entry point. It's bye bye from now\n\n", imagesize);
+    Elf32_Addr entry = elf_get_main();
     
-    ((int (*)(int, char*[]))(RESOLVE_ADDR(hdr.e_entry)))(1, argv);
+    printf("Total size of image was %d.\n"
+           "Now jumping to entry point at offset 0x%x. It's bye bye from now\n\n", imagesize, entry);
+    
+    ((int (*)(int, char*[]))(RESOLVE_ADDR(entry)))(1, argv);
     printf("\nImage (probably) ran successfully!\n"
            "Freeing memory and exiting ELF loader\n");
     free(baseptr);
-    
+    fclose(fp);
     return 0;
 }

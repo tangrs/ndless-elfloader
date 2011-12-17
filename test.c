@@ -26,5 +26,7 @@ int main() {
 	printf("If the above reads \"Hello from global!\", this thing worked\n");
 	printf("Goodbye world! \n");
 	
+	show_msgbox("Test","MSGBOX!");
+	
 	return 0;
 }

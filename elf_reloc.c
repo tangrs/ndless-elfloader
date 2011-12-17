@@ -34,3 +34,32 @@ void elf_fix_reloc(
         }
     }
 }
+
+Elf32_Addr elf_get_main() {
+    Elf32_Shdr shdr;
+    elf_get_symtab_section(&shdr);
+    Elf32_Sym *symbols = malloc(shdr.sh_size);
+    
+    if (!symbols) asm("bkpt #69");
+    elf_load_section_to_addr(&shdr, symbols, shdr.sh_size);
+    
+    Elf32_Addr rtn = elf_ehdr.e_entry;
+    int i;
+    for (i=0; i<shdr.sh_size/sizeof(Elf32_Sym); i++) {
+        if (strncmp("main",elf_resolve_symbol_string(symbols[i].st_name, shdr.sh_link),4) == 0) {
+            rtn = symbols[i].st_value;
+            goto ret;
+        }
+    }
+    //We didn't find a main. Let's look for a _start instead
+    for (i=0; i<shdr.sh_size/sizeof(Elf32_Sym); i++) {
+        if (strncmp("_start",elf_resolve_symbol_string(symbols[i].st_name, shdr.sh_link),6) == 0) {
+            rtn = symbols[i].st_value;
+            goto ret;
+        }
+    }
+    
+    ret:
+    free(symbols);
+    return rtn;
+}
