@@ -21,13 +21,20 @@
 
 #define RESOLVE_ADDR(x) (void*)( ((uint32_t)(x)) - ((uint32_t)base_addr) + ((uint32_t)baseptr) )
 
-static void *baseptr;
-static Elf32_Addr *base_addr;
+static void *baseptr; //this is the real, absolute address where the image is loaded to.
+static Elf32_Addr *base_addr; //this is the lowest virtual address that is specified in the ELF header
 
 void callback(unsigned char type, int a, Elf32_Addr offset, Elf32_Addr origval)  {
-    if (type == 2) {
+    if (type == 2) { //Only process R_ARM_ABS32 entries. I think that's all we really need to fix up anyway
         printf("Patched offset: %x from %x", offset, *((uint32_t*)RESOLVE_ADDR(offset)));
+        
+        //This thing does:
+        // 1. Resolve the offset to a real memory address
+        // 2. Dereferences that address to get the address stored at that address
+        // 3. Resolve that address to the real memory address.
+        // 4. ...and stores it back into the resolved offset.
         *((uint32_t*)RESOLVE_ADDR(offset)) = RESOLVE_ADDR(*((uint32_t*)RESOLVE_ADDR(offset)));
+        
         printf(" to %x\n", *((uint32_t*)RESOLVE_ADDR(offset)));
     }
 }
@@ -54,7 +61,7 @@ int main() {
     printf("Loading sections to memory\n");
 
     while(shdr = elf_read_next_section()) {
-        if (shdr->sh_flags & 0x2) {
+        if (shdr->sh_flags & 0x2) { //Only copy sections marked with "ALLOC"
             if (prev_addr == 0xffffffff) prev_addr = shdr->sh_addr;
             if (shdr->sh_addr < base_addr) base_addr = shdr->sh_addr;
             
@@ -64,7 +71,7 @@ int main() {
             baseptr = realloc(baseptr, newsize);
             sectionptr = ((char*)baseptr)+imagesize;
             
-            if (padding > 0) {
+            if (padding > 0) { //Do we really need to memset padding?
                 memset(sectionptr, 0, padding);
                 sectionptr = (char*)sectionptr+padding;
             }
@@ -73,7 +80,7 @@ int main() {
             imagesize = newsize;
 
             switch (shdr->sh_type) {
-                case 1:
+                case 1: //PROGBITS
                     rewind(fp);
                     fseek(fp, shdr->sh_offset,SEEK_SET);
                     memset(sectionptr, 0xbb, shdr->sh_size);
@@ -81,7 +88,7 @@ int main() {
                     
                     idle();
                     break;
-                case 8:
+                case 8: //NOBITS
                     memset(sectionptr, 0, shdr->sh_size);
                     printf("Set %dbytes of memory\n", shdr->sh_size);
                     idle();
@@ -117,12 +124,13 @@ int main() {
                     if (addr[i] >= base_addr) {
                         addr[i] = RESOLVE_ADDR(addr[i]);
                         printf(" to %p\n", RESOLVE_ADDR(addr[i]) );
-                    }else{
+                    }else{ 
+                        //0x0 is special. Not sure what is exactly meant to be filled in
+                        //Fill in baseptr by default. Must double check in ELF specs
                         addr[i] = baseptr;
                         printf(" to %p\n", baseptr);
                     }
                 }
-
                 break;
             }
         }
@@ -135,14 +143,16 @@ int main() {
     char *argv[] = { "test/parseelf.elf.tns", 0 };
     
     clear_cache();
-    idle();
     
-    Elf32_Addr entry = elf_get_main();
+    Elf32_Addr entry = elf_get_main(); //Get the offset of main
     
     printf("Total size of image was %d.\n"
            "Now jumping to entry point at offset 0x%x. It's bye bye from now\n\n", imagesize, entry);
     
+    //Woot, run the executable!
     ((int (*)(int, char*[]))(RESOLVE_ADDR(entry)))(1, argv);
+    
+    
     printf("\nImage (probably) ran successfully!\n"
            "Freeing memory and exiting ELF loader\n");
     free(baseptr);

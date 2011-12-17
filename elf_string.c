@@ -4,6 +4,8 @@
 extern Elf32_Ehdr elf_ehdr;
 extern FILE* elf_fp;
 
+
+//Resolve section header strings. Should be merged with below function
 char* elf_resolve_string(int index) {
     static char string[128];
     if (!elf_ehdr.e_shstrndx) return NULL;
@@ -20,6 +22,7 @@ char* elf_resolve_string(int index) {
     return string;
 }
 
+//Resolve a string given a section index - needs renaming
 char* elf_resolve_symbol_string(int index, int section_index) {
     static char string[128];
     Elf32_Shdr string_section;
