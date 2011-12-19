@@ -1,3 +1,21 @@
+/*
+    ndless-elfloader Loads ELF files
+    Copyright (C) 2011  Daniel Tang
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Affero General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Affero General Public License for more details.
+
+    You should have received a copy of the GNU Affero General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #include <os.h>
 #include "elf.h"
 
@@ -12,25 +30,25 @@ void elf_fix_reloc(
     //Look for relocs section
     Elf32_Sym symbol;
     Elf32_Shdr shdr;
-    Elf32_Rel *ptr;
+    Elf32_Rel *rel;
     
     int i;
     for (i=0; i<elf_ehdr.e_shnum; i++) {
-        elf_read_section(i, &shdr);
+        elf_get_section(i, &shdr);
         if (shdr.sh_type == 9) { //9 means it's a reloc type section - needs to be enum'd or #define'd
             int k, index;
-            ptr = malloc(shdr.sh_size);
-            elf_load_section_to_addr(&shdr, ptr, shdr.sh_size);
+            rel = malloc(shdr.sh_size);
+            elf_load_section_to_addr(&shdr, rel, shdr.sh_size);
+            
             //For each reloc entry, call the callback to handle it
             for (k=0; k<shdr.sh_size/sizeof(Elf32_Rel); k++) {
-                elf_get_symbol(ELF32_R_SYM(ptr[k].r_info), &symbol);
-                callback(ELF32_R_TYPE(ptr[k].r_info), 
+                elf_get_symbol(ELF32_R_SYM(rel[k].r_info), &symbol);
+                callback(ELF32_R_TYPE(rel[k].r_info), 
                          0, 
-                         shdr.sh_addr+ptr[k].r_offset, 
+                         shdr.sh_addr+rel[k].r_offset, 
                          symbol.st_value);
             }
-            
-            free(ptr);
+            free(rel);
         }
         if (shdr.sh_type == 4) {
             //Unimplemented
@@ -58,14 +76,14 @@ Elf32_Addr elf_get_main() {
     int i;
     //Iterate the symbol list for a "main"
     for (i=0; i<shdr.sh_size/sizeof(Elf32_Sym); i++) {
-        if (strncmp("main",elf_resolve_symbol_string(symbols[i].st_name, shdr.sh_link),4) == 0) {
+        if (strncmp("main",elf_resolve_string(symbols[i].st_name, shdr.sh_link),4) == 0) {
             rtn = symbols[i].st_value;
             goto ret; //Found it, return it.
         }
     }
     //We didn't find a main. Let's look for a _start instead
     for (i=0; i<shdr.sh_size/sizeof(Elf32_Sym); i++) {
-        if (strncmp("_start",elf_resolve_symbol_string(symbols[i].st_name, shdr.sh_link),6) == 0) {
+        if (strncmp("_start",elf_resolve_string(symbols[i].st_name, shdr.sh_link),6) == 0) {
             rtn = symbols[i].st_value;
             goto ret; //Found it, return it.
         }
