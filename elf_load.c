@@ -30,7 +30,7 @@ static size_t imagesize, prevsize;
 
 static void reloc_callback(unsigned char type, int a, Elf32_Addr offset, Elf32_Addr origval)  {
     if (type == 2) { //Only process R_ARM_ABS32 entries. I think that's all we really need to fix up anyway
-        printf("Patched offset: %x from %x", offset, *((uint32_t*)RESOLVE_ADDR(offset)));
+        console_printf("Patched offset: %x from %x", offset, *((uint32_t*)RESOLVE_ADDR(offset)));
         
         //This thing does:
         // 1. Resolve the offset to a real memory address
@@ -39,7 +39,7 @@ static void reloc_callback(unsigned char type, int a, Elf32_Addr offset, Elf32_A
         // 4. ...and stores it back into the resolved offset.
         *((void**)RESOLVE_ADDR(offset)) = RESOLVE_ADDR(*((void**)RESOLVE_ADDR(offset)));
         
-        printf(" to %x\n", *((uint32_t*)RESOLVE_ADDR(offset)));
+        console_printf(" to %x\n", *((uint32_t*)RESOLVE_ADDR(offset)));
     }
 }
 
@@ -72,7 +72,7 @@ static void load_section_callback(Elf32_Shdr* shdr) {
                 default:
                     break;
         }
-        printf("Copied section %s\n",
+        console_printf("Copied section %s\n",
         elf_resolve_section_string(shdr->sh_name));
     }
 }
@@ -91,12 +91,12 @@ int elf_execute(FILE* fp, int *ret, int argc, char *argv[]) {
     elf_set_file(fp);
     Elf32_Ehdr hdr = elf_get_header();
     
-    printf("---Begin loading ELF file---\n");
-    printf("Loading sections to memory\n");
+    console_printf("---Begin loading ELF file---\n");
+    console_printf("Loading sections to memory\n");
     elf_process_sections(load_section_callback);
-    printf("Finished loading image\n");
+    console_printf("Finished loading image\n");
     
-    printf("---Begin relocating---\n");
+    console_printf("---Begin relocating---\n");
 
     elf_get_got_section(&shdr);
     Elf32_Addr *got = RESOLVE_ADDR(shdr.sh_addr); //Get address of where the GOT is loaded in memory.
@@ -104,15 +104,15 @@ int elf_execute(FILE* fp, int *ret, int argc, char *argv[]) {
     //Begin patching GOT
     int i;
     for (i=0; i<shdr.sh_size/sizeof(Elf32_Addr); i++) { //Iterate through and fix up entries.
-        printf("Patched GOT entry from %x",got[i]);
+        console_printf("Patched GOT entry from %x",got[i]);
         if (got[i] >= baseaddr) {
             got[i] = (Elf32_Addr)RESOLVE_ADDR(got[i]);
-            printf(" to %p\n", RESOLVE_ADDR(got[i]) );
+            console_printf(" to %p\n", RESOLVE_ADDR(got[i]) );
         }else{ 
             //0x0 is special. Not sure what is exactly meant to be filled in
             //Fill in baseptr by default. Must double check in ELF specs
             got[i] = (Elf32_Addr)baseptr;
-            printf(" to %p\n", baseptr);
+            console_printf(" to %p\n", baseptr);
         }
     }
     
@@ -120,18 +120,19 @@ int elf_execute(FILE* fp, int *ret, int argc, char *argv[]) {
     elf_fix_reloc(reloc_callback);
     
     clear_cache();
+    
     //Now we're done!
-    printf("Finished relocating\n");
+    console_printf("Finished relocating\n");
 
     void* entrypoint = RESOLVE_ADDR(elf_get_main()); //Get the address of main or _start
     
-    printf("Total size of image was %d.\n"
+    console_printf("Total size of image was %d.\n"
            "Now jumping to entry point at 0x%p. It's bye bye from now\n\n", imagesize, entrypoint);
     
     //Woot, run the executable!
     *ret = ((int (*)(int, char*[]))(entrypoint))(argc, argv);
     
-    printf("\nImage (probably) ran successfully!\n"
+    console_printf("\nImage (probably) ran successfully!\n"
            "Freeing memory and exiting ELF loader\n");
     free(baseptr);
     return 0;

@@ -39,7 +39,7 @@ void elf_fix_reloc(
             int k, index;
             rel = malloc(shdr.sh_size);
             elf_load_section_to_addr(&shdr, rel, shdr.sh_size);
-            
+
             //For each reloc entry, call the callback to handle it
             for (k=0; k<shdr.sh_size/sizeof(Elf32_Rel); k++) {
                 elf_get_symbol(ELF32_R_SYM(rel[k].r_info), &symbol);

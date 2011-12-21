@@ -16,18 +16,4 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "elf.h"
-#include "console.h"
-#include <os.h>
-
-int main() {
-    char *filename = "/documents/test/test.elf.tns";
-    FILE* fp = fopen(filename,"rb");
-    int ret;
-    char *argv[] = {filename, 0};
-    
-    elf_execute(fp, &ret, 1, argv);
-    
-    fclose(fp);
-    return 0;
-}
+void console_printf(const char *format, ...);
