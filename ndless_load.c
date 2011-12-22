@@ -22,26 +22,26 @@
 
 int ndless_execute(FILE* fp, int *ret, int argc, char *argv[]) {
     printf("Loading file as ndless binary\n");
-    
+
     //Ndless lacks a ftell() function so we can't tell the size of the file
     //We'll have to load it bit by bit
-    
+
     void* ptr = malloc(FILE_READ_BLOCKS);
     if (!ptr) goto malloc_error;
     size_t size = FILE_READ_BLOCKS;
-    
+
     while (fread(ptr, 1, FILE_READ_BLOCKS, fp) == FILE_READ_BLOCKS) {
         size += FILE_READ_BLOCKS;
         ptr = realloc(ptr, size);
         if (!ptr) goto malloc_error;
     }
-    
+
     clear_cache();
     *ret = ((int (*)(int argc, char *argv[]))(ptr + sizeof(PRGMSIG)))(argc, argv);
     free(ptr);
-    
+
     return 0;
-    
+
     malloc_error:
     printf("Malloc returned NULL\n");
     return -1;

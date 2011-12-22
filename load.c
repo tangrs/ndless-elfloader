@@ -25,9 +25,9 @@ int main() {
     FILE* fp = fopen(filename,"rb");
     int ret;
     char *argv[] = {filename, 0};
-    
+
     elf_execute(fp, &ret, 1, argv);
-    
+
     fclose(fp);
     return 0;
 }

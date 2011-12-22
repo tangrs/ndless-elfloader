@@ -25,13 +25,13 @@ extern FILE* elf_fp;
 //Function to fix symbol relocations
 //Call back is type = type of relocation, a (unimplemented atm), offset = fixup address, original value (should be ignored?)
 void elf_fix_reloc(
-    void (*callback)(unsigned char type, int a, Elf32_Addr offset, Elf32_Addr origval) 
+    void (*callback)(unsigned char type, int a, Elf32_Addr offset, Elf32_Addr origval)
 ) {
     //Look for relocs section
     Elf32_Sym symbol;
     Elf32_Shdr shdr;
     Elf32_Rel *rel;
-    
+
     int i;
     for (i=0; i<elf_ehdr.e_shnum; i++) {
         elf_get_section(i, &shdr);
@@ -43,9 +43,9 @@ void elf_fix_reloc(
             //For each reloc entry, call the callback to handle it
             for (k=0; k<shdr.sh_size/sizeof(Elf32_Rel); k++) {
                 elf_get_symbol(ELF32_R_SYM(rel[k].r_info), &symbol);
-                callback(ELF32_R_TYPE(rel[k].r_info), 
-                         0, 
-                         shdr.sh_addr+rel[k].r_offset, 
+                callback(ELF32_R_TYPE(rel[k].r_info),
+                         0,
+                         shdr.sh_addr+rel[k].r_offset,
                          symbol.st_value);
             }
             free(rel);
@@ -71,7 +71,7 @@ Elf32_Addr elf_get_main() {
     elf_get_symtab_section(&shdr);
     Elf32_Sym *symbols = malloc(shdr.sh_size);
     elf_load_section_to_addr(&shdr, symbols, shdr.sh_size);
-    
+
     Elf32_Addr rtn = elf_ehdr.e_entry;
     int i;
     //Iterate the symbol list for a "main"

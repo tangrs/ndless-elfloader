@@ -37,8 +37,8 @@ Elf32_Ehdr elf_get_header() {
 /*int elf_sanity_check() {
     if (memcmp("\x7fELF",elf_ehdr.e_ident,4) == 0) {
         if (elf_ehdr.e_type != ET_EXEC) return ELF_SANITY_FAIL;
-        
-    
+
+
         return ELF_SANITY_OK;
     }
     if (memcmp("PRG",elf_ehdr.e_ident,3) == 0)  return ELF_SANITY_NDLESS_BINARY;

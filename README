@@ -1,4 +1,4 @@
-This is a ELF-loader for use with Ndless. It (eventually) will let you run ELF executables on Ndless. 
+This is a ELF-loader for use with Ndless. It (eventually) will let you run ELF executables on Ndless.
 
 The loader works but is held together by chewing gum at this stage. Devs only, not for public consumption. Code quality is disgusting.
 

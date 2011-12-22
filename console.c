@@ -37,30 +37,30 @@ static inline void console_flush();
 void console_printf(const char *format, ...) {
     va_list arglist;
     char buffer[MAX_CONSOLE_STRLEN];
-    
-	va_start(arglist, format);
-	vsprintf(buffer,format,arglist); //Argh, unsafe!
-	va_end(arglist);
-	
-	char c;
-	int i = 0;
-	while (c = buffer[i]) {
-	    console_putc(c);
-	    i++;
-	}
-	console_flush();
+
+    va_start(arglist, format);
+    vsprintf(buffer,format,arglist); //Argh, unsafe!
+    va_end(arglist);
+
+    char c;
+    int i = 0;
+    while (c = buffer[i]) {
+        console_putc(c);
+        i++;
+    }
+    console_flush();
 }
 
 static inline void console_putc(char c) {
     int i, k;
     uint32_t addr = (y*FONT_HEIGHT*SCREEN_WIDTH)+(x*FONT_WIDTH);
     char (*font)[FONT_HEIGHT] = consoleFont;
-    
-    if (c == '\n') {   
+
+    if (c == '\n') {
         console_newline();
         return;
     }
-    
+
     for (k=0; k<FONT_HEIGHT; k++) {
         for (i=7; i>=0; i--) {
             if (GET_BIT(i, font[c][k] )) {
@@ -71,12 +71,12 @@ static inline void console_putc(char c) {
         }
         addr+=SCREEN_WIDTH;
     }
-    
+
     x++;
     if (x >= CONSOLE_WIDTH) {
         console_newline();
     }
-    
+
 }
 static inline void console_newline() {
     y++;
@@ -93,7 +93,7 @@ static inline void console_shiftup() {
 static inline void console_write(uint32_t addr, char c) {
     char tmp = screenbuffer[addr/2];
     c &= 0xf;
-    
+
     if (addr % 2 == 0) {
         c  <<= 0x4;
         tmp &= 0xf;
@@ -102,7 +102,7 @@ static inline void console_write(uint32_t addr, char c) {
         tmp &= 0xf0;
         tmp |= c;
     }
-    
+
     screenbuffer[addr/2] = tmp;
 }
 

@@ -26,7 +26,7 @@ extern FILE* elf_fp;
 void elf_process_sections(void (*callback)(Elf32_Shdr* shdr)) {
     int i;
     Elf32_Shdr shdr;
-    
+
     for (i=0; elf_get_section(i, &shdr)==0; i++) {
         callback(&shdr);
     }
@@ -35,10 +35,10 @@ void elf_process_sections(void (*callback)(Elf32_Shdr* shdr)) {
 //Read the section header given at the index into a struct.
 int elf_get_section(int index, Elf32_Shdr* write) {
     if (!(index < elf_ehdr.e_shnum)) return -1;
-    
+
     fseek(elf_fp, elf_ehdr.e_shoff+(index*elf_ehdr.e_shentsize), SEEK_SET);
     fread(write, 1, elf_ehdr.e_shentsize, elf_fp);
-    
+
     return 0;
 }
 //Find the symbol table section header and write it into a struct
@@ -71,7 +71,7 @@ int elf_get_got_section(Elf32_Shdr* write) {
 void elf_get_symbol(int index, Elf32_Sym *symbol) {
     Elf32_Shdr shdr;
     elf_get_symtab_section(&shdr);
-    
+
     fseek(elf_fp, shdr.sh_offset+(index*shdr.sh_entsize), SEEK_SET);
     fread(symbol, 1, shdr.sh_entsize, elf_fp);
 }
