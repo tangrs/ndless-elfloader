@@ -18,9 +18,39 @@
 
 #include <os.h>
 #include "elf.h"
+#include "debug.h"
 
 extern Elf32_Ehdr elf_ehdr;
 extern FILE* elf_fp;
+
+static inline int strfind(char* haystack, char* needle) {
+    int haystacksize = strlen(haystack);
+    int needlesize = strlen(needle);
+    if (!needlesize) return -1;
+
+    int i;
+    for (i=0; i<haystacksize-needlesize+1; i++) {
+        if (haystack[i] == needle[0]) { //If first character matches
+            int k;
+            for (k=1; k<needlesize; k++) { //Start matching from the second character
+                if (haystack[i+k] != needle[k])    goto notfound;
+            }
+            return i;
+            notfound:
+            continue;
+        }
+    }
+    return -1;
+}
+
+#define DEBUG_STR ".debug"
+static inline int is_debug_section(int index) {
+    char* sectionstr = elf_resolve_section_string(index);
+    console_printf("%s\n",sectionstr);
+    assert(sectionstr);
+
+    return (strfind(sectionstr, DEBUG_STR) != -1);
+}
 
 //Function to fix symbol relocations
 //Call back is type = type of relocation, a (unimplemented atm), offset = fixup address, original value (should be ignored?)
@@ -34,25 +64,28 @@ void elf_fix_reloc(
 
     int i;
     for (i=0; i<elf_ehdr.e_shnum; i++) {
-        elf_get_section(i, &shdr);
-        if (shdr.sh_type == 9) { //9 means it's a reloc type section - needs to be enum'd or #define'd
-            int k, index;
-            rel = malloc(shdr.sh_size);
-            elf_load_section_to_addr(&shdr, rel, shdr.sh_size);
+        assert(elf_get_section(i, &shdr) == 0);
+        if (!is_debug_section(shdr.sh_name)) {
+            if (shdr.sh_type == 9) { //9 means it's a reloc type section - needs to be enum'd or #define'd
+    			int k, index;
+    			rel = malloc(shdr.sh_size);
+    			assert(rel);
+    			elf_load_section_to_addr(&shdr, rel, shdr.sh_size);
 
-            //For each reloc entry, call the callback to handle it
-            for (k=0; k<shdr.sh_size/sizeof(Elf32_Rel); k++) {
-                elf_get_symbol(ELF32_R_SYM(rel[k].r_info), &symbol);
-                callback(ELF32_R_TYPE(rel[k].r_info),
-                         0,
-                         shdr.sh_addr+rel[k].r_offset,
-                         symbol.st_value);
-            }
-            free(rel);
-        }
-        if (shdr.sh_type == 4) {
-            //Unimplemented
-        }
+    			//For each reloc entry, call the callback to handle it
+    			for (k=0; k<shdr.sh_size/sizeof(Elf32_Rel); k++) {
+    				elf_get_symbol(ELF32_R_SYM(rel[k].r_info), &symbol);
+    				callback(ELF32_R_TYPE(rel[k].r_info),
+    						0,
+    						rel[k].r_offset,
+    						symbol.st_value);
+    			}
+    			free(rel);
+    		}
+    		if (shdr.sh_type == 4) {
+    			//Unimplemented
+    		}
+    	}
     }
 }
 

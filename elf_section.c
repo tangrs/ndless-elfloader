@@ -18,6 +18,7 @@
 
 #include <os.h>
 #include "elf.h"
+#include "debug.h"
 
 extern Elf32_Ehdr elf_ehdr;
 extern FILE* elf_fp;
@@ -70,7 +71,7 @@ int elf_get_got_section(Elf32_Shdr* write) {
 //Resolve a symbol index into a symbol struct
 void elf_get_symbol(int index, Elf32_Sym *symbol) {
     Elf32_Shdr shdr;
-    elf_get_symtab_section(&shdr);
+    assert(elf_get_symtab_section(&shdr) == 0);
 
     fseek(elf_fp, shdr.sh_offset+(index*shdr.sh_entsize), SEEK_SET);
     fread(symbol, 1, shdr.sh_entsize, elf_fp);

@@ -62,11 +62,11 @@ static inline void console_putc(char c) {
     }
 
     for (k=0; k<FONT_HEIGHT; k++) {
-        for (i=7; i>=0; i--) {
+        for (i=FONT_WIDTH-1; i>=0; i--) {
             if (GET_BIT(i, font[c][k] )) {
-                console_write(addr+(7-i), 0x0);
+                console_write(addr+(FONT_WIDTH-1-i), 0x0);
             }else{
-                console_write(addr+(7-i), 0xf);
+                console_write(addr+(FONT_WIDTH-1-i), 0xf);
             }
         }
         addr+=SCREEN_WIDTH;
@@ -109,4 +109,5 @@ static inline void console_write(uint32_t addr, char c) {
 static inline void console_flush() {
     void* screenaddr = SCREEN_BASE_ADDRESS;
     memcpy(screenaddr, screenbuffer, SCREEN_BYTES_SIZE);
+    clear_cache();
 }
