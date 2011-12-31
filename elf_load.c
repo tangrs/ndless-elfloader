@@ -23,13 +23,13 @@
 static void *sectionptr;
 static void *baseptr; //this is the real, absolute address where the image is loaded to.
 static Elf32_Addr baseaddr; //this is the lowest virtual address that is specified in the ELF header
-static unsigned int prevaddr;
+static Elf32_Addr prevaddr;
 static size_t imagesize, prevsize;
 
 #define RESOLVE_ADDR(x) (void*)( ((uint32_t)(x)) - ((uint32_t)baseaddr) + ((uint32_t)baseptr) )
 
 static void reloc_callback(unsigned char type, int a, Elf32_Addr offset, Elf32_Addr origval)  {
-    if (type == 2) { //Only process R_ARM_ABS32 entries. I think that's all we really need to fix up anyway
+    if (type == R_ARM_ABS32) { //Only process R_ARM_ABS32 entries. I think that's all we really need to fix up anyway
         console_printf("Patched offset: %x from %x", offset, *((uint32_t*)RESOLVE_ADDR(offset)));
 
         //This thing does:
@@ -44,7 +44,7 @@ static void reloc_callback(unsigned char type, int a, Elf32_Addr offset, Elf32_A
 }
 
 static void load_section_callback(Elf32_Shdr* shdr) {
-    if (shdr->sh_flags & 0x2) { //Only copy sections marked with "ALLOC"
+    if (shdr->sh_flags & SHF_ALLOC) { //Only copy sections marked with "ALLOC"
         if (prevaddr == 0xffffffff) prevaddr = shdr->sh_addr;
         if (shdr->sh_addr < baseaddr) baseaddr = shdr->sh_addr;
 
@@ -63,16 +63,16 @@ static void load_section_callback(Elf32_Shdr* shdr) {
         imagesize = newsize;
 
         switch (shdr->sh_type) {
-                case 1: //PROGBITS
+                case SHT_PROGBITS: //PROGBITS
                     elf_load_section_to_addr(shdr, sectionptr, shdr->sh_size);
                     break;
-                case 8: //NOBITS
+                case SHT_NOBITS: //NOBITS
                     memset(sectionptr, 0, shdr->sh_size);
                     break;
                 default:
                     break;
         }
-        console_printf("Copied section %s\n",
+        console_printf("Loaded section %s\n",
         elf_resolve_section_string(shdr->sh_name));
     }
 }
@@ -89,6 +89,8 @@ int elf_execute(FILE* fp, int *ret, int argc, char *argv[]) {
     Elf32_Shdr shdr;
 
     elf_set_file(fp);
+
+    if (elf_sanity_check() != 0) return -1;
     Elf32_Ehdr hdr = elf_get_header();
 
     console_printf("---Begin loading ELF file---\n");

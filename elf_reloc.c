@@ -66,7 +66,7 @@ void elf_fix_reloc(
     for (i=0; i<elf_ehdr.e_shnum; i++) {
         assert(elf_get_section(i, &shdr) == 0);
         if (!is_debug_section(shdr.sh_name)) {
-            if (shdr.sh_type == 9) { //9 means it's a reloc type section - needs to be enum'd or #define'd
+            if (shdr.sh_type == SHT_REL) {
     			int k, index;
     			rel = malloc(shdr.sh_size);
     			assert(rel);
@@ -82,7 +82,7 @@ void elf_fix_reloc(
     			}
     			free(rel);
     		}
-    		if (shdr.sh_type == 4) {
+    		if (shdr.sh_type == SHT_RELA) {
     			//Unimplemented
     		}
     	}

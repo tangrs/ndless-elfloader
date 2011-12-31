@@ -54,7 +54,7 @@ void console_printf(const char *format, ...) {
 static inline void console_putc(char c) {
     int i, k;
     uint32_t addr = (y*FONT_HEIGHT*SCREEN_WIDTH)+(x*FONT_WIDTH);
-    char (*font)[FONT_HEIGHT] = consoleFont;
+    char (*font)[FONT_HEIGHT] = (char (*)[FONT_HEIGHT])consoleFont;
 
     if (c == '\n') {
         console_newline();
@@ -109,5 +109,4 @@ static inline void console_write(uint32_t addr, char c) {
 static inline void console_flush() {
     void* screenaddr = SCREEN_BASE_ADDRESS;
     memcpy(screenaddr, screenbuffer, SCREEN_BYTES_SIZE);
-    clear_cache();
 }

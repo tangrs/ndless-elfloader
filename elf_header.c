@@ -34,13 +34,26 @@ Elf32_Ehdr elf_get_header() {
     return ehdr;
 }
 
-/*int elf_sanity_check() {
-    if (memcmp("\x7fELF",elf_ehdr.e_ident,4) == 0) {
-        if (elf_ehdr.e_type != ET_EXEC) return ELF_SANITY_FAIL;
-
-
-        return ELF_SANITY_OK;
+int elf_sanity_check() {
+    if (memcmp("\x7f""ELF",elf_ehdr.e_ident,4) != 0) {
+        console_printf("ELF magic header does not match\n");
+        return -1;
     }
-    if (memcmp("PRG",elf_ehdr.e_ident,3) == 0)  return ELF_SANITY_NDLESS_BINARY;
-    return ELF_SANITY_FAIL;
-}*/
+    if (elf_ehdr.e_type != ET_EXEC) {
+        console_printf("ELF file not an executable\n");
+        return -1;
+    }
+    if (elf_ehdr.e_machine != EM_ARM) {
+        console_printf("ELF file is not for ARM architecture\n");
+        return -1;
+    }
+    if (elf_ehdr.e_version != 1) {
+        console_printf("ELF version is invalid\n");
+        return -1;
+    }
+    if (elf_ehdr.e_ident[EI_CLASS] != ELFCLASS32) {
+        console_printf("ELF file is not 32bits\n");
+        return -1;
+    }
+    return 0;
+}

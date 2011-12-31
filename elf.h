@@ -29,6 +29,27 @@ typedef uint32_t Elf32_Addr;
 #define EM_ARM 40
 #define ET_EXEC 2
 #define EI_NIDENT 16
+#define EI_CLASS 4
+#define ELFCLASS32 1
+
+enum {
+    SHT_PROGBITS = 1,
+    SHT_SYMTAB = 2,
+    SHT_STRTAB = 3,
+    SHT_RELA = 4,
+
+    SHT_NOBITS = 8,
+    SHT_REL = 9
+};
+
+enum {
+    SHF_ALLOC = 0x2
+};
+
+enum {
+    R_ARM_ABS32 = 2
+};
+
 /* ELF File Header */
 typedef struct {
 
@@ -99,16 +120,12 @@ typedef struct {
     Elf32_SWord r_addend;
 } Elf32_Rela;
 
-enum {
-    ELF_SANITY_OK = 0,
-    ELF_SANITY_FAIL = -1
-};
-
 #define ELF32_R_SYM(i) ((i)>>8)
 #define ELF32_R_TYPE(i) ((unsigned char)(i))
 #define ELF32_R_INFO(s,t) (((s)<<8)+(unsigned char)(t))
 
 void elf_set_file(FILE* fp);
+int elf_sanity_check();
 Elf32_Ehdr elf_get_header();
 int elf_get_section(int index, Elf32_Shdr* write);
 int elf_get_symtab_section(Elf32_Shdr* write);

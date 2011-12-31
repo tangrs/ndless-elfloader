@@ -48,7 +48,7 @@ int elf_get_symtab_section(Elf32_Shdr* write) {
     Elf32_Shdr shdr;
     int i;
     for (i=0; elf_get_section(i, &shdr)==0; i++) {
-        if (shdr.sh_type == 2) { //2 is the identifier for symtab. Needs to be turned into a enum or #define
+        if (shdr.sh_type == SHT_SYMTAB) {
             *write = shdr;
             return 0;
         }

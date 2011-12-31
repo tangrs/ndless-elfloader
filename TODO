@@ -1,6 +1,5 @@
 TODO
 
-* Linking with C++ (for some reason, we get _syscall_savedlr undefined errors)
 * Polish code up
-* Sanity checks (especially if user is trying to open a Ndless binary with the ELF loader)
 * Better error handling (especially with checking for NULLs from malloc)
+* Some sort of UI

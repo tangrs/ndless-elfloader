@@ -21,8 +21,22 @@
 #include "debug.h"
 #include <os.h>
 
+enum {
+    BIN_ELF,
+    BIN_NDLS,
+    BIN_UNKNOWN = -1
+};
+
+static int file_type(FILE* fp) {
+    char magic[4];
+    fread(magic, 1, 4, fp);
+    if (memcmp("\x7f""ELF",magic,4) == 0) return BIN_ELF;
+    if (memcmp("PRG",magic,3) == 0)  return BIN_NDLS;
+    return BIN_UNKNOWN;
+}
+
 int main() {
-    char *filename = "/documents/test/test.elf.tns";
+    char *filename = "/documents/test/parseelf.elf.tns";
     FILE* fp = fopen(filename,"rb");
     int ret;
     char *argv[] = {filename, 0};
