@@ -18,7 +18,7 @@
 
 #include <os.h>
 #include "elf.h"
-#include "debug.h"
+#include "../misc/debug.h"
 
 extern Elf32_Ehdr elf_ehdr;
 extern FILE* elf_fp;

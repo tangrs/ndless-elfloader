@@ -15,6 +15,6 @@
     You should have received a copy of the GNU Affero General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include <os.h>
 
-int ndless_execute(FILE* fp, int *ret, int argc, char *argv[]);
+
+int do_patch();

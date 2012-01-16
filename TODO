@@ -2,4 +2,3 @@ TODO
 
 * Polish code up
 * Better error handling (especially with checking for NULLs from malloc)
-* Some sort of UI
