@@ -22,6 +22,8 @@
 #include "misc/debug.h"
 #include <os.h>
 
+#define PRGMSIG "PRG"
+
 int main(int argc, char *argv[]) {
     if (argc > 1) {
         if (strcmp(argv[1], "patch") == 0) {
