@@ -52,9 +52,9 @@ static inline int is_debug_section(int index) {
 }
 
 //Function to fix symbol relocations
-//Call back is type = type of relocation, a (unimplemented atm), offset = fixup address, original value (should be ignored?)
+//Call back is type = type of relocation, a (unimplemented atm), offset = fixup address
 void elf_fix_reloc(
-    void (*callback)(unsigned char type, int a, Elf32_Addr offset, Elf32_Addr origval)
+    void (*callback)(unsigned char type, int a, Elf32_Addr offset)
 ) {
     //Look for relocs section
     Elf32_Sym symbol;
@@ -73,11 +73,10 @@ void elf_fix_reloc(
 
     			//For each reloc entry, call the callback to handle it
     			for (k=0; k<shdr.sh_size/sizeof(Elf32_Rel); k++) {
-    				elf_get_symbol(ELF32_R_SYM(rel[k].r_info), &symbol);
+    				//elf_get_symbol(ELF32_R_SYM(rel[k].r_info), &symbol);
     				callback(ELF32_R_TYPE(rel[k].r_info),
     						0,
-    						rel[k].r_offset,
-    						symbol.st_value);
+    						rel[k].r_offset);
     			}
     			free(rel);
     		}

@@ -28,7 +28,7 @@ static size_t imagesize, prevsize;
 
 #define RESOLVE_ADDR(x) (void*)( ((uint32_t)(x)) - ((uint32_t)baseaddr) + ((uint32_t)baseptr) )
 
-static void reloc_callback(unsigned char type, int a, Elf32_Addr offset, Elf32_Addr origval)  {
+static void reloc_callback(unsigned char type, int a, Elf32_Addr offset)  {
     if (type == R_ARM_ABS32) { //Only process R_ARM_ABS32 entries. I think that's all we really need to fix up anyway
 #ifdef DEBUG
         console_printf("Patched offset: %x from %x", offset, *((uint32_t*)RESOLVE_ADDR(offset)));
@@ -56,8 +56,8 @@ static void load_section_callback(Elf32_Shdr* shdr) {
         baseptr = realloc(baseptr, newsize);
         sectionptr = ((char*)baseptr)+imagesize;
 
-        if (padding > 0) { //Do we really need to memset padding?
-            memset(sectionptr, 0, padding);
+        if (padding > 0) {
+            //memset(sectionptr, 0, padding);
             sectionptr = (char*)sectionptr+padding;
         }
         prevsize = shdr->sh_size;

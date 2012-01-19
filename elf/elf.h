@@ -137,7 +137,7 @@ char* elf_resolve_string(int index, int section_index);
 void elf_get_symbol(int index, Elf32_Sym *symbol);
 
 void elf_fix_reloc(
-    void (*callback)(unsigned char type, int a, Elf32_Addr offset, Elf32_Addr origval)
+    void (*callback)(unsigned char type, int a, Elf32_Addr offset)
 );
 
 int elf_execute(FILE* fp, int *ret, int argc, char *argv[]);
