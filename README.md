@@ -6,7 +6,7 @@ This project is a ELF-loader for use with Ndless. It relocated and runs ELF exec
 
 The loader is currently in a BETA-ish stage. It works and it's been made easy enough to use but can be buggy. It's also still carrying a lot of development related cruft.
 
-It's only aimed at OS's from 1.7 to 2.1 at the moment but it's very easy to port to newer OS's (pretty much just add some function addresses to the hooking function).
+It's only aimed at OS's from 1.7 to 2.1 at the moment but it's very easy to port to newer OS's (~~pretty much just add some function addresses to the hooking function~~ See PORTING_TO_NDLESS3.1 for details).
 
 ## Compiling
 
