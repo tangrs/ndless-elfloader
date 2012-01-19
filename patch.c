@@ -20,6 +20,9 @@
 #include "misc/console.h"
 #include "misc/debug.h"
 #include <os.h>
+//If using a modified hook, this must be included after os.h
+//as it overrides the HOOK_DEFINE macro
+#include "magic_hook.h"
 
 //Following function was ripped off Ndless arm/utils.c
 static int ut_read_os_version_index(void) {
@@ -99,10 +102,38 @@ HOOK_DEFINE(elf_hook) {
 }
 static unsigned const ins_ploader_hook_addrs[] = {0x1000921C, 0x100091F0, 0x10008BCC, 0x10008B9C, 0x10008D94, 0x10008D64};
 
+
+//This hook detection code only works if nothing else is hooking over the ELF program loader
+//(i.e. it is the 'top level' hook and not part of a chain)
+int is_hook_already_installed(unsigned _addr) {
+#ifdef ELF_MAGIC_HOOK
+    unsigned *hook = ((unsigned **)_addr)[1];
+
+    //addr[0]   = ldr pc, [pc, #4]
+    //addr[1]   = pointer to hook
+    //  |
+    //  +-> hook[0] = add pc, pc, #0
+    //      hook[1] = magic number
+
+    if (hook[1] == ELF_MAGIC_HOOK) {
+        return 1;
+    }else{
+        return 0;
+    }
+#else
+    return 0;
+#endif
+}
+
 int do_patch() {
     int index = ut_read_os_version_index();
     if (index < 0) return -1;
 
-    HOOK_INSTALL(ins_ploader_hook_addrs[index], elf_hook);
+    if (!is_hook_already_installed(ins_ploader_hook_addrs[index])) {
+        HOOK_INSTALL(ins_ploader_hook_addrs[index], elf_hook);
+    }else{
+        show_msgbox("ELF Loader", "Hook is already installed!");
+        return -1;
+    }
     return 0;
 }

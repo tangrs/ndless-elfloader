@@ -20,8 +20,6 @@ Change into the directory and run ```./make_loader.sh``` and it should compile e
 
 Compile the source and copy load.tns to your calculator. Run it and it will install the hook.
 
-Make sure to only run the hook once per reboot or else it'll leak memory (TODO: fix)
-
 This hook will run before Ndless's program loader and load ELF files if it encounters them. Your normal Ndless programs will continue to work.
 
 ## How do I develop apps to work on this?
