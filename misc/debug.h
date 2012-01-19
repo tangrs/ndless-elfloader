@@ -15,7 +15,7 @@
     You should have received a copy of the GNU Affero General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#define DEBUG 1
+//#define DEBUG 1
 #define assert(x)   do { \
                         if (!(x)) { \
                             console_printf("Assert failure at line %d in %s\nExpression was %s", __LINE__,__FILE__, #x); \

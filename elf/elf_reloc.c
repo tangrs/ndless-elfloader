@@ -46,7 +46,6 @@ static inline int strfind(char* haystack, char* needle) {
 #define DEBUG_STR ".debug"
 static inline int is_debug_section(int index) {
     char* sectionstr = elf_resolve_section_string(index);
-    console_printf("%s\n",sectionstr);
     assert(sectionstr);
 
     return (strfind(sectionstr, DEBUG_STR) != -1);

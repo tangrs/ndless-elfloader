@@ -19,6 +19,7 @@
 
 #include <stdint.h>
 #include <os.h>
+#include "../misc/debug.h"
 
 typedef uint32_t Elf32_Word;
 typedef int32_t  Elf32_SWord;

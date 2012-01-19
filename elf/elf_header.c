@@ -36,23 +36,33 @@ Elf32_Ehdr elf_get_header() {
 
 int elf_sanity_check() {
     if (memcmp("\x7f""ELF",elf_ehdr.e_ident,4) != 0) {
+#ifdef DEBUG
         console_printf("ELF magic header does not match\n");
+#endif
         return -1;
     }
     if (elf_ehdr.e_type != ET_EXEC) {
+#ifdef DEBUG
         console_printf("ELF file not an executable\n");
+#endif
         return -1;
     }
     if (elf_ehdr.e_machine != EM_ARM) {
+#ifdef DEBUG
         console_printf("ELF file is not for ARM architecture\n");
+#endif
         return -1;
     }
     if (elf_ehdr.e_version != 1) {
+#ifdef DEBUG
         console_printf("ELF version is invalid\n");
+#endif
         return -1;
     }
     if (elf_ehdr.e_ident[EI_CLASS] != ELFCLASS32) {
+#ifdef DEBUG
         console_printf("ELF file is not 32bits\n");
+#endif
         return -1;
     }
     return 0;

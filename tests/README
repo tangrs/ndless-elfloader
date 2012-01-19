@@ -1,0 +1,10 @@
+These are some basic benchmarking and unit tests.
+
+genbench is a program you run on your host to produce benchmark.c
+It generates some symbols. Default benchmark.c contains 128 + 1 function symbols
+
+benchmark.c is just to see how efficiently elfloader can load all the symbols
+test.c is the wrapper
+unittest.c does a unit test on the loader
+
+Put benchmark.elf.tns, test.elf.tns and unittest.elf.tns in the same folder at runtime and run test.c
